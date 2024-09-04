@@ -1,0 +1,59 @@
+"""
+Requirements: 
+	- Strawberryfields module
+	- matplotlib module
+"""
+
+import strawberryfields as sf
+import strawberryfields.ops as ops
+from strawberryfields.utils import extract_unitary, is_unitary
+
+#________________________________________________
+
+#to simulate  a state:
+
+target_dm = []
+prog = sf.Program(1)
+eng = sf.Engine('fock', backend_options={"cutoff_dim": 100})
+with prog.context as q:
+    # sf.ops.Vacuum() | q[0]
+    sf.ops.Coherent(7, 0) | q[0]
+   # sf.ops.Squeezed(0.25, math.pi / 2) | q[0]
+    # sf.ops.LossChannel(0.1) |q[0]
+    # sf.ops.MeasureHomodyne(i) | q[0] 
+    tmp = []
+    target_dm = eng.run(prog).state.dm()
+
+
+#____________________________________________________
+
+#to simulate  a BHD measurement of a state:
+#It returns the quadrature measurements
+
+shots_per_batch = 100
+sf.hbar = 1  #default convention of strawberryfields is hbar=2
+
+samples = []
+phi = np.linspace(-np.pi, np.pi, 50)
+for i in phi:
+    prog = sf.Program(1)
+    eng = sf.Engine('bosonic')  #engine and cutoff need to be changed for high photon number states
+    with prog.context as q:
+        # sf.ops.Coherent(,0) | q[0]
+        #sf.ops.Squeezed(1,0)| q[0]
+        sf.ops.Coherent(7,0) | q[0]
+        # sf.ops.LossChannel(0.1) |q[0]
+        sf.ops.MeasureHomodyne(i) | q[0] 
+        tmp = []
+        tmp = eng.run(prog, shots=shots_per_batch).samples[:, 0]
+        for j in tmp:
+            samples.append([i, j])
+
+
+#to now set it into the MaxLik algorithm: 
+
+theta = samples[:, 0]   
+Q = samples[:, 1]
+
+
+ 
